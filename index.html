@@ -1,0 +1,215 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>HC Planner Prototype</title>
+    <!-- Prevent browser caching -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <!-- Firebase SDK (compat mode for simple script-tag usage) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+    <script src="firebase-sync.js?v=7"></script>
+    <link rel="stylesheet" href="styles.css?v=7" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div>
+        <p class="eyebrow">Shift planning prototype</p>
+        <h1>HC Planner</h1>
+      </div>
+      <nav class="tabs" aria-label="Planner views">
+        <button class="tab is-active" data-view="boardView">Board</button>
+        <button class="tab" data-view="peopleView">AA Directory</button>
+        <button class="tab" data-view="ratesView">Rates</button>
+        <button class="tab" data-view="forecastView">Future Planning</button>
+        <button class="tab" data-view="hcInputView">HC Input</button>
+      </nav>
+    </header>
+
+    <main>
+      <section id="boardView" class="view is-active">
+        <section class="control-strip">
+          <label>
+            Pack target ratio
+            <select id="ratioSelect">
+              <option value="1.2">1.2x pack per picker</option>
+              <option value="1.5" selected>1.5x pack per picker</option>
+              <option value="1.75">1.75x pack per picker</option>
+              <option value="2">2.0x pack per picker</option>
+            </select>
+          </label>
+          <label>
+            Plan point
+            <select id="snapshotSelect">
+              <option value="18:30">Start 18:30</option>
+              <option value="01:30">After 01:30</option>
+              <option value="02:30">After 02:30</option>
+              <option value="04:00">After 04:00</option>
+            </select>
+          </label>
+          <button id="undoBtn" class="secondary">Undo</button>
+          <button id="toggleRatesBtn" class="secondary">Show Rates</button>
+          <button id="vtoBtn" class="highlight-btn" data-highlight="vto">VTO</button>
+          <button id="lndBtn" class="highlight-btn" data-highlight="lnd">L&D</button>
+          <button id="highlightedBtn" class="highlight-btn" data-highlight="highlighted">Highlighted</button>
+          <button id="traineesBtn" class="highlight-btn" data-highlight="trainees">Trainees</button>
+          <div class="training-filter">
+            <select id="trainingSelect">
+              <option value="">Training ▾</option>
+              <option value="pick">Pick</option>
+              <option value="pack">Pack</option>
+              <option value="stow">Stow</option>
+              <option value="decant">Decant</option>
+              <option value="arsaw">Arsaw</option>
+              <option value="vendors">Vendors</option>
+            </select>
+          </div>
+        </section>
+
+        <section class="floor-board" id="floorBoard" aria-label="Station board"></section>
+        <section class="critical-roles" id="criticalRoles" aria-label="Critical roles and indirects"></section>
+        <section class="early-leavers-summary" id="earlyLeaversSummary" aria-label="Early leavers summary"></section>
+      </section>
+
+      <section id="peopleView" class="view">
+        <section class="directory-head">
+          <div>
+            <p class="eyebrow">AA setup</p>
+            <h2>Training and Restrictions</h2>
+          </div>
+          <button id="addPersonBtn">Add AAs</button>
+        </section>
+        <div class="people-table-wrap">
+          <table class="people-table">
+            <thead>
+              <tr>
+                <th>Login</th>
+                <th>Name</th>
+                <th>Manager</th>
+                <th>Pick</th>
+                <th>Pack</th>
+                <th>Stow</th>
+                <th>Decant</th>
+                <th>Arsaw</th>
+                <th>Vendors</th>
+                <th>Floor restriction</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="peopleTable"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="ratesView" class="view">
+        <section class="rates-head">
+          <div>
+            <p class="eyebrow">Live performance</p>
+            <h2>Paste Rates</h2>
+          </div>
+          <div class="rates-actions">
+            <button id="saveRatesBtn">Update Rates</button>
+            <button id="resetRatesBtn" class="secondary">Reset Rates</button>
+          </div>
+        </section>
+        <section class="rates-grid">
+          <label>
+            Pick rates
+            <textarea id="pickRatesInput" rows="14" placeholder="login001 145&#10;login002, 132"></textarea>
+          </label>
+          <label>
+            Pack rates
+            <textarea id="packRatesInput" rows="14" placeholder="login001 89&#10;login002, 104"></textarea>
+          </label>
+        </section>
+      </section>
+
+      <section id="forecastView" class="view">
+        <section class="forecast-layout">
+          <div class="forecast-panel">
+            <p class="eyebrow">Auto allocation</p>
+            <h2>Future Planning</h2>
+            <label>
+              Plan time
+              <select id="planTime">
+                <option value="18:30">Start 18:30</option>
+                <option value="01:30">After 01:30</option>
+                <option value="02:30">After 02:30</option>
+                <option value="04:00">After 04:00</option>
+              </select>
+            </label>
+            <label>
+              Target pack ratio
+              <select id="planRatio">
+                <option value="1.2">1.2x pack per picker</option>
+                <option value="1.5" selected>1.5x pack per picker</option>
+                <option value="1.75">1.75x pack per picker</option>
+                <option value="2">2.0x pack per picker</option>
+              </select>
+            </label>
+            <button id="suggestPlanBtn">Suggest Plan</button>
+          </div>
+          <div class="forecast-result" id="forecastResult"></div>
+        </section>
+        <section class="floor-board planning-board" id="futureBoard" aria-label="Future planning station board"></section>
+      </section>
+
+      <section id="hcInputView" class="view">
+        <section class="hc-input-head">
+          <div>
+            <p class="eyebrow">Manual input</p>
+            <h2>HC Input</h2>
+          </div>
+          <button id="applyHcInputBtn">Apply to Board</button>
+        </section>
+        <p class="hc-input-desc">Paste login and station data for each floor. Format: <strong>login  station  role</strong> (one per line, tab or space separated). Role is optional — defaults to Pick.</p>
+        <div class="hc-input-floors">
+          <div class="hc-input-floor">
+            <h3>P2</h3>
+            <textarea class="hc-input-result" id="hcResultP2" rows="10" placeholder="login001  201  Pick&#10;login002  202  Pack&#10;login003  203"></textarea>
+          </div>
+          <div class="hc-input-floor">
+            <h3>P3</h3>
+            <textarea class="hc-input-result" id="hcResultP3" rows="10" placeholder="login001  301  Pick&#10;login002  302  Pack"></textarea>
+          </div>
+          <div class="hc-input-floor">
+            <h3>P4</h3>
+            <textarea class="hc-input-result" id="hcResultP4" rows="10" placeholder="login001  401  Pick&#10;login002  402  Pack"></textarea>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+    <dialog id="addPeopleDialog" class="modal">
+      <form method="dialog" class="modal-panel">
+        <h2>Add AAs</h2>
+        <p>Paste one AA per line. Columns: login, name, manager (separated by tab or comma).</p>
+        <textarea id="bulkPeopleInput" rows="10" placeholder="login001, John Smith, Manager Name&#10;login002, Jane Smith, Manager Name"></textarea>
+        <div class="modal-actions">
+          <button value="cancel" class="secondary">Cancel</button>
+          <button id="saveBulkPeopleBtn" value="default">Add to Directory</button>
+        </div>
+      </form>
+    </dialog>
+
+    <template id="tileTemplate">
+      <article class="aa-tile" draggable="true">
+        <div>
+          <strong class="login"></strong>
+          <span class="meta"></span>
+        </div>
+        <button class="tile-menu" aria-label="Change leave time">...</button>
+        <select class="leave-select" aria-label="Leave time">
+          <option value="full">Full</option>
+          <option value="absent">Absent</option>
+        </select>
+      </article>
+    </template>
+
+    <script src="app.js?v=7"></script>
+  </body>
+</html>
